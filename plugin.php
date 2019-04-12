@@ -192,7 +192,7 @@ $script .= <<<EOS
 
     
  #pas{
-    margin: 0 16px;
+    /*margin: 0 16px;*/
     margin-top: 8px;
    
    }
