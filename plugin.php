@@ -1,20 +1,28 @@
 <?php
 
-class pluginLinks extends Plugin {
+class pluginPublicAnnouncements extends Plugin {
 
 	public function init()
 	{
 		// JSON database
 		$jsondb = json_encode(array(
-			'Example Announcement'=>array(
+			'0000'=>array(
+                'text'=>"Example Announcement",
 			    'active'=>true,
                 'type'=>'info',
                 'color'=>'light-blue'
-		)));
+		      ),
+            '0001'=>array(
+                'text'=>"Example Announcement",
+			    'active'=>true,
+                'type'=>'info',
+                'color'=>'light-blue'
+		      )
+        ));
 
 		// Fields and default values for the database of this plugin
 		$this->dbFields = array(
-			'selector'=>'body',
+			'selector'=>'.body',
             'position'=>'before',
 			'jsondb'=>$jsondb
 		);
@@ -32,31 +40,41 @@ class pluginLinks extends Plugin {
 		$jsondb = Sanitize::htmlDecode($jsondb);
 
 		// Convert JSON to Array
-		$links = json_decode($jsondb, true);
+		$pas = json_decode($jsondb, true);
 
 		// Check if the user click on the button delete or add
-		if( isset($_POST['deleteLink']) ) {
+		if( isset($_POST['deletePA']) ) {
 			// Values from $_POST
-			$name = $_POST['deleteLink'];
+			$code = $_POST['deletePA'];
 
 			// Delete the link from the array
-			unset($links[$name]);
+			unset($pas[$code]);
 		}
-		elseif( isset($_POST['addLink']) ) {
-			// Values from $_POST
-			$name = $_POST['linkName'];
-			$url = $_POST['linkURL'];
-
+		elseif( isset($_POST['addPA']) ) {
+			
+            
+            $text = $_POST[$_POST['addPA'].'_text'];
+            
+            if(empty($_POST['addPA'])) $code = substr(sha1($text), 0, 4);
+            else $code = $_POST['addPA'];
+            
+           
 			// Check empty string
-			if( empty($name) ) { return false; }
+			if( empty($text) ) { return false; }
 
-			// Add the link
-			$links[$name] = $url;
+			// Add the PA
+			$pas[$code]['text'] = $text;
 		}
 
 		// Encode html to store the values on the database
-		$this->db['label'] = Sanitize::html($_POST['label']);
-		$this->db['jsondb'] = Sanitize::html(json_encode($links));
+		$this->db['selector'] = Sanitize::html($_POST['selector']);
+		$this->db['position'] = Sanitize::html($_POST['position']);
+		$this->db['jsondb'] = Sanitize::html(json_encode($pas));
+		
+        
+        $this->db['post'] = Sanitize::html(json_encode($_POST));
+        
+        
 
 		// Save the database
 		return $this->save();
@@ -71,10 +89,19 @@ class pluginLinks extends Plugin {
 		$html .= $this->description();
 		$html .= '</div>';
 
+        //settings
 		$html .= '<div>';
-		$html .= '<label>'.$L->get('Label').'</label>';
-		$html .= '<input name="label" class="form-control" type="text" value="'.$this->getValue('label').'">';
-		$html .= '<span class="tip">'.$L->get('This title is almost always used in the sidebar of the site').'</span>';
+		$html .= '<label>'.$L->get('Selector').'</label>';
+		$html .= '<input name="selector" class="form-control" type="text" value="'.$this->getValue('selector').'">';
+		$html .= '<span class="tip">'.$L->get('define the selector to hook announcements before or after').'</span>';
+		$html .= '</div>';
+        
+        $html .= '<div>';
+		$html .= '<label>'.$L->get('position').'</label>';
+        $html .= '<select name="position">';
+        $html .= '<option value="before">before</option>';
+        $html .= '<option value="after">after</option>';
+        $html .= '</select>';
 		$html .= '</div>';
 
 		$html .= '<div>';
@@ -86,17 +113,12 @@ class pluginLinks extends Plugin {
 		$html .= '<h4 class="mt-3">'.$L->get('Add a new link').'</h4>';
 
 		$html .= '<div>';
-		$html .= '<label>'.$L->get('Name').'</label>';
-		$html .= '<input name="linkName" type="text" class="form-control" value="" placeholder="Bludit">';
+		$html .= '<label>'.$L->get('Text').'</label>';
+		$html .= '<input name="text" type="text" class="form-control">';
 		$html .= '</div>';
 
 		$html .= '<div>';
-		$html .= '<label>'.$L->get('Url').'</label>';
-		$html .= '<input name="linkURL" type="text" class="form-control" value="" placeholder="https://www.bludit.com/">';
-		$html .= '</div>';
-
-		$html .= '<div>';
-		$html .= '<button name="addLink" class="btn btn-primary my-2" type="submit">'.$L->get('Add').'</button>';
+		$html .= '<button name="addPA" class="btn btn-primary my-2" type="submit">'.$L->get('Add').'</button>';
 		$html .= '</div>';
 
 		// Get the JSON DB, getValue() with the option unsanitized HTML code
@@ -105,20 +127,22 @@ class pluginLinks extends Plugin {
 
 		$html .= !empty($links) ? '<h4 class="mt-3">'.$L->get('Links').'</h4>' : '';
 
-		foreach($links as $name=>$url) {
+		foreach($links as $code=>$array) {
 			$html .= '<div class="my-2">';
 			$html .= '<label>'.$L->get('Name').'</label>';
-			$html .= '<input type="text" class="form-control" value="'.$name.'" disabled>';
+			$html .= '<input type="'.$code.'_text" class="form-control" value="'.$array['text'].'">';
 			$html .= '</div>';
 
-			$html .= '<div>';
-			$html .= '<label>'.$L->get('Url').'</label>';
-			$html .= '<input type="text" class="form-control" value="'.$url.'" disabled>';
-			$html .= '</div>';
+            $html .= '<div>';
+		    $html .= '<button name="addPA"  value="'.$code.'" class="btn btn-primary my-2" type="submit">'.$L->get('Save').'</button>';
+		    $html .= '</div>';
 
 			$html .= '<div>';
-			$html .= '<button name="deleteLink" class="btn btn-secondary my-2" type="submit" value="'.$name.'">'.$L->get('Delete').'</button>';
+			$html .= '<button name="deletePA" class="btn btn-secondary my-2" type="submit" value="'.$code.'">'.$L->get('Delete').'</button>';
 			$html .= '</div>';
+            
+           
+
 		}
 
 		return $html;
@@ -134,7 +158,7 @@ class pluginLinks extends Plugin {
         
 
 		// HTML
-		$html = "<div>";
+		$html = '<div id="pas">';
 
 		// Get the JSON DB, getValue() with the option unsanitized HTML code
 		$jsondb = $this->getValue('jsondb', false);
@@ -143,9 +167,9 @@ class pluginLinks extends Plugin {
 		// By default the database of categories are alphanumeric sorted
 		foreach( $links as $text=>$settings ) 
         {
-            $class = "pa-info";
+            $class = "warning";
             
-            $html .= '<div class="z-depth-1 '.$class.'">';
+            $html .= '<div class="z-depth-1 pa '.$class.'">';
             $html .= $text;
             $html .= '</div>';
 		}
@@ -163,7 +187,33 @@ $script .= <<<EOS
   \$pa( document ).ready(function() {
     \$pa('{$selector}').{$position}('{$html}');
   });
-</script
+</script>
+<style>
+
+    
+ #pas{
+    margin: 0 16px;
+    margin-top: 8px;
+   
+   }
+   
+   .pa{
+    padding:8px;
+   }
+   
+   #pas > .pa.info{
+    background-color: #FFC107;
+   }
+   
+    #pas > .pa.warning{
+    background-color: #FFC107;
+   }
+   
+    #pas > .pa.red{
+    background-color: #FFC107;
+   }
+   
+   </style>
 
 EOS;
      

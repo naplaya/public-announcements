@@ -1,8 +1,8 @@
 {
 	"plugin-data":
 	{
-		"name": "Links",
-		"description": "Shows a link list in the sidebar, you can modify these links in settings."
+		"name": "Public announcements",
+		"description": "Show some useful information at your homepage if needed."
 	},
-	"add-a-new-link": "Add a new link"
+	"add-a-new-announcement": "Add a new announcement"
 }
