@@ -119,7 +119,7 @@ EOS;
         
         //settings
         $html .= '<a href="#demo" data-toggle="collapse">'.$L->get('Advanced settings').'</a>';
-        $html .= '<div id="demo" class="collapse show">';
+        $html .= '<div id="demo" class="collapse">';
 
             $html .= '<div>';
             $html .= '<label>'.$L->get('Selector').'</label>';
