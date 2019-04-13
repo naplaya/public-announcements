@@ -53,7 +53,10 @@ class pluginPublicAnnouncements extends Plugin {
 		elseif( isset($_POST['addPA']) ) {
 			
             
-            $text = $_POST[$_POST['addPA'].'_text'];
+            $text  = $_POST[$_POST['addPA'].'_text'];
+            $from  = $_POST[$_POST['addPA'].'_from'];
+            $to    = $_POST[$_POST['addPA'].'_to'];
+            $color = $_POST[$_POST['addPA'].'_color'];
             
             if(empty($_POST['addPA'])) $code = substr(sha1($text), 0, 4);
             else $code = $_POST['addPA'];
@@ -63,7 +66,10 @@ class pluginPublicAnnouncements extends Plugin {
 			if( empty($text) ) { return false; }
 
 			// Add the PA
-			$pas[$code]['text'] = $text;
+			$pas[$code]['text']  = $text;
+			if(!empty($from)) $pas[$code]['from']  = $from;
+			if(!empty($to)) $pas[$code]['to']    = $to;
+			if(!empty($color)) $pas[$code]['color'] = $color;
 		}
 
 		// Encode html to store the values on the database
@@ -85,7 +91,19 @@ class pluginPublicAnnouncements extends Plugin {
 	{
 		global $L;
         
-		$html  = '<div class="alert alert-primary" role="alert">';
+$html = <<<EOS
+<style>
+    .pa-inline{
+        display:flex;
+    }
+
+    input[type=color]{
+        width:100px;
+    }
+</style>
+EOS;
+        
+		$html .= '<div class="alert alert-primary" role="alert">';
 		$html .= $this->description();
 		$html .= '</div>';
 
@@ -110,36 +128,63 @@ class pluginPublicAnnouncements extends Plugin {
 
 		// New link, when the user click on save button this call the method post()
 		// and the new link is added to the database
-		$html .= '<h4 class="mt-3">'.$L->get('Add a new link').'</h4>';
+		$html .= '<h4 class="mt-3">'.$L->get('Add a new announcement').'</h4>';
 
 		$html .= '<div>';
 		$html .= '<label>'.$L->get('Text').'</label>';
-		$html .= '<input name="text" type="text" class="form-control">';
+		$html .= '<input name="_text" type="text" class="form-control">';
 		$html .= '</div>';
+        
+        $html .= '<div class="pa-inline">';
+            $html .= '<div>';
+                $html .= '<label>'.$L->get('From date').'</label>';
+                $html .= '<input type="date" name="_from" class="form-control">';
+            $html .= '</div>';
+            $html .= '<div>';
+                $html .= '<label>'.$L->get('To date').'</label>';
+                $html .= '<input type="date" name="_to" class="form-control">';
+            $html .= '</div>';
+            $html .= '<div>';
+                $html .= '<label>'.$L->get('color').'</label>';
+                $html .= '<input type="color" name="_color" class="form-control" value="#FFC107">';
+             $html .= '</div>';
+        $html .= '</div>';
 
-		$html .= '<div>';
-		$html .= '<button name="addPA" class="btn btn-primary my-2" type="submit">'.$L->get('Add').'</button>';
+		$html .= '<div class="my-2">';
+            $html .= '<button name="addPA" class="btn btn-primary my-2" type="submit">'.$L->get('Add').'</button>';
 		$html .= '</div>';
 
 		// Get the JSON DB, getValue() with the option unsanitized HTML code
 		$jsondb = $this->getValue('jsondb', $unsanitized=false);
-		$links = json_decode($jsondb, true);
+		$pas = json_decode($jsondb, true);
 
-		$html .= !empty($links) ? '<h4 class="mt-3">'.$L->get('Links').'</h4>' : '';
+		$html .= !empty($pas) ? '<h4 class="mt-3">'.$L->get('Announcements').'</h4>' : '';
 
-		foreach($links as $code=>$array) {
-			$html .= '<div class="my-2">';
-			$html .= '<label>'.$L->get('Name').'</label>';
-			$html .= '<input type="'.$code.'_text" class="form-control" value="'.$array['text'].'">';
+		foreach($pas as $code=>$array) {
+			$html .= '<div class="mt-3">';
+                $html .= '<label>'.$L->get('Text').'</label>';
+                $html .= '<input type="text" name="'.$code.'_text" class="form-control" value="'.$array['text'].'">';
 			$html .= '</div>';
+            
+            $html .= '<div class="pa-inline">';
+                $html .= '<div>';
+                    $html .= '<label>'.$L->get('From date').'</label>';
+                    $html .= '<input type="date" name="'.$code.'_from" class="form-control" value="'.$array['from'].'">';
+                $html .= '</div>';
+                $html .= '<div>';
+                    $html .= '<label>'.$L->get('To date').'</label>';
+                    $html .= '<input type="date" name="'.$code.'_to" class="form-control" value="'.$array['to'].'">';
+                $html .= '</div>';
+                $html .= '<div>';
+                    $html .= '<label>'.$L->get('color').'</label>';
+                    $html .= '<input type="color" name="'.$code.'_color" class="form-control" value="'.$array['color'].'">';
+			     $html .= '</div>';
+            $html .= '</div>';
 
             $html .= '<div>';
-		    $html .= '<button name="addPA"  value="'.$code.'" class="btn btn-primary my-2" type="submit">'.$L->get('Save').'</button>';
+                $html .= '<button name="addPA"  value="'.$code.'" class="btn btn-primary my-2" type="submit">'.$L->get('Save').'</button>';
+                $html .= '<button name="deletePA" class="btn btn-secondary my-2" type="submit" value="'.$code.'">'.$L->get('Delete').'</button>';
 		    $html .= '</div>';
-
-			$html .= '<div>';
-			$html .= '<button name="deletePA" class="btn btn-secondary my-2" type="submit" value="'.$code.'">'.$L->get('Delete').'</button>';
-			$html .= '</div>';
             
            
 
@@ -165,13 +210,17 @@ class pluginPublicAnnouncements extends Plugin {
 		$links = json_decode($jsondb);
 
 		// By default the database of categories are alphanumeric sorted
-		foreach( $links as $text=>$settings ) 
+		foreach( $links as $c=>$a ) 
         {
-            $class = "warning";
+            /*$f = intval(str_replace('-', '', $a['from']));
+            $t = intval(str_replace('-', '', $a['to']));
+            $c = intval(date('yyyymmdd'));*/
             
-            $html .= '<div class="z-depth-1 pa '.$class.'">';
-            $html .= $text;
-            $html .= '</div>';
+            print_r($a);
+            
+            /*$html .= '<div class="z-depth-1 pa" style="background-color:'.$a['color'].'">';
+            $html .= $a['text'];
+            $html .= '</div>';*/
 		}
 
 
