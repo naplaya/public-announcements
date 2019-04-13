@@ -207,25 +207,24 @@ EOS;
 
 		// Get the JSON DB, getValue() with the option unsanitized HTML code
 		$jsondb = $this->getValue('jsondb', false);
-		$links = json_decode($jsondb);
+		$pas = json_decode($jsondb);
 
 		// By default the database of categories are alphanumeric sorted
-		foreach( $links as $c=>$a ) 
+		foreach($pas as $pa) 
         {
-            /*$f = intval(str_replace('-', '', $a['from']));
-            $t = intval(str_replace('-', '', $a['to']));
-            $c = intval(date('yyyymmdd'));*/
-            
-            print_r($a);
-            
-            /*$html .= '<div class="z-depth-1 pa" style="background-color:'.$a['color'].'">';
-            $html .= $a['text'];
-            $html .= '</div>';*/
+            $f = intval(str_replace('-', '', $pa->from));
+            $t = intval(str_replace('-', '', $pa->to));
+            $c = intval(date('Ymd'));
+           
+            if($f<=$c && ($t == 0 || $c<=$t))
+            {
+                $html .= '<div class="z-depth-1 pa" style="background-color:'.$pa->color.'">';
+                    $html .= $pa->text;
+                $html .= '</div>';
+            }
 		}
 
-
- 		$html .= '</div>';
-        
+ 		$html .= '</div>';        
         
         $script = Theme::jquery();
 $script .= <<<EOS
