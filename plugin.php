@@ -107,24 +107,33 @@ EOS;
 		$html .= $this->description();
 		$html .= '</div>';
 
-        //settings
-		$html .= '<div>';
-		$html .= '<label>'.$L->get('Selector').'</label>';
-		$html .= '<input name="selector" class="form-control" type="text" value="'.$this->getValue('selector').'">';
-		$html .= '<span class="tip">'.$L->get('define the selector to hook announcements before or after').'</span>';
-		$html .= '</div>';
         
-        $html .= '<div>';
-		$html .= '<label>'.$L->get('position').'</label>';
-        $html .= '<select name="position">';
-        $html .= '<option value="before">before</option>';
-        $html .= '<option value="after">after</option>';
-        $html .= '</select>';
-		$html .= '</div>';
+        //settings
+        $html .= '<a href="#demo" data-toggle="collapse">'.$L->get('Advanced settings').'</a>';
+        $html .= '<div id="demo" class="collapse">';
 
-		$html .= '<div>';
-		$html .= '<button name="save" class="btn btn-primary my-2" type="submit">'.$L->get('Save').'</button>';
-		$html .= '</div>';
+            $html .= '<div>';
+            $html .= '<label>'.$L->get('Selector').'</label>';
+            $html .= '<input name="selector" class="form-control" type="text" value="'.$this->getValue('selector').'">';
+            $html .= '<span class="tip">'.$L->get('define the selector to hook announcements before or after').'</span>';
+            $html .= '</div>';
+
+            $html .= '<div>';
+            $html .= '<label>'.$L->get('position').'</label>';
+            $html .= '<select name="position">';
+            $html .= '<option value="before">before</option>';
+            $html .= '<option value="after">after</option>';
+            $html .= '</select>';
+            $html .= '</div>';
+        
+        
+            
+
+            $html .= '<div>';
+            $html .= '<button name="save" class="btn btn-primary my-2" type="submit">'.$L->get('Save').'</button>';
+            $html .= '</div>';
+        
+          $html .= '</div>';
 
 		// New link, when the user click on save button this call the method post()
 		// and the new link is added to the database
