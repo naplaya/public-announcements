@@ -19,12 +19,21 @@ class pluginPublicAnnouncements extends Plugin {
                 'color'=>'light-blue'
 		      )
         ));
+        
+        $style .= <<<EOS
+#pas{margin-top: 8px;}
+   
+.pa{padding:8px;}
+EOS;
 
 		// Fields and default values for the database of this plugin
 		$this->dbFields = array(
 			'selector'=>'.body',
             'position'=>'before',
-			'jsondb'=>$jsondb
+			'jsondb'=>$jsondb,
+            
+            
+            'style'=>$style
 		);
 
 		// Disable default Save and Cancel button
@@ -75,8 +84,8 @@ class pluginPublicAnnouncements extends Plugin {
 		// Encode html to store the values on the database
 		$this->db['selector'] = Sanitize::html($_POST['selector']);
 		$this->db['position'] = Sanitize::html($_POST['position']);
-		$this->db['jsondb'] = Sanitize::html(json_encode($pas));
-		
+		$this->db['jsondb']   = Sanitize::html(json_encode($pas));
+		$this->db['style']    = Sanitize::html($_POST['style']);
         
         $this->db['post'] = Sanitize::html(json_encode($_POST));
         
@@ -110,7 +119,7 @@ EOS;
         
         //settings
         $html .= '<a href="#demo" data-toggle="collapse">'.$L->get('Advanced settings').'</a>';
-        $html .= '<div id="demo" class="collapse">';
+        $html .= '<div id="demo" class="collapse show">';
 
             $html .= '<div>';
             $html .= '<label>'.$L->get('Selector').'</label>';
@@ -126,8 +135,12 @@ EOS;
             $html .= '</select>';
             $html .= '</div>';
         
-        
-            
+            $html .= '<div>';
+                $html .= '<label>'.$L->get('Style CSS').'</label>';
+                $html .= '<textarea name="style" resizable="false">';
+                    $html .= $this->getValue('style');
+                $html .= '</textarea>';
+            $html .= '</div>';
 
             $html .= '<div>';
             $html .= '<button name="save" class="btn btn-primary my-2" type="submit">'.$L->get('Save').'</button>';
@@ -245,36 +258,11 @@ $script .= <<<EOS
     \$pa('{$selector}').{$position}('{$html}');
   });
 </script>
-<style>
-
-    
- #pas{
-    /*margin: 0 16px;*/
-    margin-top: 8px;
-   
-   }
-   
-   .pa{
-    padding:8px;
-   }
-   
-   #pas > .pa.info{
-    background-color: #FFC107;
-   }
-   
-    #pas > .pa.warning{
-    background-color: #FFC107;
-   }
-   
-    #pas > .pa.red{
-    background-color: #FFC107;
-   }
-   
-   </style>
-
 EOS;
+        
+        
      
 
-		return $script;
+		return $script.'<style>'.$this->getValue('style').'</style>';
 	}
 }
